@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Treasure Hunt - Firebase</title>
+<style>
+    body { font-family: Arial; background: #96e6a1; }
+    .container { max-width: 400px; margin: 50px auto; background: white; padding: 20px; border-radius: 8px; }
+    input { width: 100%; padding: 10px; margin: 8px 0; }
+    .btn { padding: 10px; width: 100%; background: #ff4e50; border: none; color: white; font-size: 16px; cursor: pointer; }
+    .btn:hover { background: #e84345; }
+</style>
+</head>
+<body>
+<div style="
+   
+   position: absolute;
+  bottom: 180px; /* distance from bottom of page */
+  left: 45%;
+  transform: translateX(-40%);" class="container">
+    <h2><center>Treasure Hunt Signup</center></h2>
+    <form id="signupForm">
+        NAME:<input type="text" name="name" placeholder="Your identity is required to enter the hunt..." required>
+        PHONE NO:<input type="tel" name="phone" placeholder="Give your correct number...we will track you😏" required>
+        <button type="submit" class="btn">Start</button>
+    </form>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa_wF-wp2v42mLNic1_R1a7w0skWV94b8",
+    authDomain: "useless-ecf5e.firebaseapp.com",
+    projectId: "useless-ecf5e",
+    storageBucket: "useless-ecf5e.firebasestorage.app",
+    messagingSenderId: "399978256767",
+    appId: "1:399978256767:web:2bb6f882fc03074bd5224a",
+    measurementId: "G-2RHWZRZKHR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = e.target.name.value.trim();
+    const phone = e.target.phone.value.trim();
+
+    if (!name || !phone) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "players"), {
+        name: name,
+        phone: phone,
+        timestamp: new Date()
+      });
+      window.location.href = "2Levels.html"; // Redirect only if saved successfully
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Error saving data. Please try again.");
+    }
+  });
+</script>
+</body>
+</html>

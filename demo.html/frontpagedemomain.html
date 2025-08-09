@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Treasure Hunt - Firebase</title>
+<style>
+    body { font-family: Arial; background: #f0f0f0; }
+    .container { max-width: 400px; margin: 50px auto; background: white; padding: 20px; border-radius: 8px; }
+    input { width: 100%; padding: 10px; margin: 8px 0; }
+    button { padding: 10px; width: 100%; background: #ff4e50; border: none; color: white; font-size: 16px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>Treasure Hunt Signup</h2>
+    <form id="signupForm">
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="tel" name="phone" placeholder="Phone Number" required>
+        <button type="submit">Start</button>
+    </form>
+
+    <div id="gameArea" style="display:none;">
+        <h3 id="progressText">Level: 1</h3>
+        <p id="puzzleText"></p>
+        <input type="text" id="answerInput" placeholder="Your answer">
+        <button id="submitAnswerBtn">Submit Answer</button>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa_wF-wp2v42mLNic1_R1a7w0skWV94b8",
+    authDomain: "useless-ecf5e.firebaseapp.com",
+    projectId: "useless-ecf5e",
+    storageBucket: "useless-ecf5e.firebasestorage.app",
+    messagingSenderId: "399978256767",
+    appId: "1:399978256767:web:2bb6f882fc03074bd5224a",
+    measurementId: "G-2RHWZRZKHR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let playerDocId = null;
+  let currentLevel = 1;
+
+  // Demo puzzles
+  const puzzles = [
+    { question: "I have keys but no doors. What am I?", answer: "keyboard" },
+    { question: "I’m tall when I’m young, and short when I’m old. What am I?", answer: "candle" },
+    { question: "What has to be broken before you can use it?", answer: "egg" }
+  ];
+
+  function loadPuzzle() {
+    if (currentLevel > puzzles.length) {
+      document.getElementById('puzzleText').textContent = "🎉 Congratulations! You finished the treasure hunt!";
+      document.getElementById('answerInput').style.display = 'none';
+      document.getElementById('submitAnswerBtn').style.display = 'none';
+      return;
+    }
+    document.getElementById('progressText').textContent = `Level: ${currentLevel}`;
+    document.getElementById('puzzleText').textContent = puzzles[currentLevel - 1].question;
+    document.getElementById('answerInput').value = '';
+  }
+
+  // Signup
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = e.target.name.value;
+    const phone = e.target.phone.value;
+
+    try {
+      const docRef = await addDoc(collection(db, "players"), {
+        name: name,
+        phone: phone,
+        completionLevel: currentLevel,
+        timestamp: new Date()
+      });
+      playerDocId = docRef.id;
+      document.getElementById('signupForm').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      loadPuzzle();
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      alert("Error saving data.");
+    }
+  });
+
+  // Submit answer
+  document.getElementById('submitAnswerBtn').addEventListener('click', async () => {
+    const userAnswer = document.getElementById('answerInput').value.trim().toLowerCase();
+    if (userAnswer === puzzles[currentLevel - 1].answer) {
+      currentLevel++;
+      try {
+        const playerRef = doc(db, "players", playerDocId);
+        await updateDoc(playerRef, { completionLevel: currentLevel });
+      } catch (error) {
+        console.error("Error updating document: ", error);
+        alert("Error updating progress.");
+      }
+      loadPuzzle();
+    } else {
+      alert("❌ Wrong answer, try again!");
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Level</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom,  #96e6a1);
+      text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      color: #2e7d32;
+    }
+    .levels-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+    .level-box {
+      background: #388e3c;
+      color: white;
+      border-radius: 12px;
+      width: 300px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: background 0.3s, transform 0.2s;
+      text-decoration: none;
+    }
+    .level-box:hover {
+      background: #1b5e20;
+      transform: translateY(-5px) scale(1.04);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Choose Your Level</h1>
+
+  <div class="levels-container">
+    <a href="level1.html" class="level-box">Level 1</a>
+    <a href="level2.html" class="level-box">Level 2</a>
+    <a href="level3.html" class="level-box">Level 3</a>
+    <a href="level4.html" class="level-box">Level 4</a>
+  </div>
+
+</body>
+</html>

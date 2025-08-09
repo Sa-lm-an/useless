@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Code Lock Treasure Hunt</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #96e6a1;
+      padding: 20px;
+    }
+    h1 {
+      color: #8b5e3c;
+    }
+    #chest {
+      width: 400px;
+      margin-top: 50px;
+    }
+    input {
+      padding: 8px;
+      font-size: 18px;
+      text-align: center;
+      width: 80px;
+      margin-top: 10px;
+    }
+    button, .link-button {
+      padding: 12px 12px;
+      font-size: 20px;
+      margin-top: 18px;
+      background: #d2b48c;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-block;
+      width: 80px;
+    }
+    .link-button:hover, button:hover {
+      background: #c0a16b;
+    }
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔒 Code Lock Treasure Hunt 🪙</h1>
+  <p>Enter the 3-digit code to unlock the treasure chest!</p>
+
+  <img id="chest" src="level4image.jpg" alt="Closed Treasure Chest">
+
+  <div>
+    <input type="text" id="codeInput" placeholder="000" maxlength="3" size="3">
+  </div>
+  <button onclick="checkCode()">🔑 Unlock</button>
+<div style="
+   
+   position: absolute;
+  bottom: 30px; /* distance from bottom of page */
+  left: 48%;
+  transform: translateX(-40%);">
+  
+  
+  
+  
+  <div id="message"></div>
+
+  <script>
+    const secretCode = "947";
+
+    function checkCode() {
+      const userCode = document.getElementById("codeInput").value.trim();
+      const message = document.getElementById("message");
+
+      if (userCode === secretCode) {
+        message.textContent = "🎉 Correct! You unlocked the treasure!";
+      } else {
+        message.textContent = "❌ Wrong code! Try again.";
+      }
+    }
+   
+
+  </script>
+    <a href="2Levels.html" class="link-button">All Levels </a>
+    <a href="level2.html" class="link-button">Next Level </a>
+
+    
+</div>
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Treasure Hunt Game</title>
+<style>
+  :root{
+    --bg1:#96e6a1; --bg2: #96e6a1; --accent:#cf9307; --muted:#0f172a;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(255,209,102,0.07), transparent),
+                linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:#0f172a; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%; max-width:1100px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px; padding:18px; box-shadow: 0 10px 40px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);
+    display:grid; grid-template-columns: 1fr 320px; gap:16px;
+  }
+
+  /* Game area */
+  .play-area{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));
+    border-radius:10px; padding:12px; position:relative; overflow:hidden;
+    min-height:500px; border:1px solid rgba(255,255,255,0.02);
+  }
+  .map{
+    position:absolute; inset:12px; border-radius:8px; overflow:hidden;
+    background:
+      radial-gradient(circle at 10% 15%, rgba(255,209,102,0.04), transparent 6%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01) 20px, rgba(255,255,255,0.00) 20px, rgba(255,255,255,0.00) 40px),
+      linear-gradient(180deg, rgba(20,28,59,0.6), rgba(9,18,44,0.65));
+    border:2px dashed rgba(255,255,255,0.02);
+  }
+
+  /* clickable indicators (for found reveal) */
+  .treasure {
+    position:absolute; font-size:26px; transform:translate(-50%,-50%) scale(0.001);
+    transition: transform 360ms cubic-bezier(.2,.9,.2,1), filter 300ms;
+    pointer-events:none; /* we detect clicks on map */
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6));
+  }
+  .treasure.found { transform:translate(-50%,-50%) scale(1); pointer-events:auto; z-index:3; }
+
+  /* UI right column */
+  .ui{
+    padding:12px; display:flex; flex-direction:column; gap:12px;
+  }
+  .panel{ background: rgba(163, 183, 9, 0.02); padding:12px; border-radius:10px; border:1px solid rgba(213, 5, 5, 0.02); }
+  h1{ margin:0; font-size:20px; color:var(--accent); letter-spacing:0.4px }
+  .meta{ display:flex; color:#0f172a; gap:8px; margin-top:8px; flex-wrap:wrap }
+  .chip{ background:rgba(23, 5, 53, 0.03); padding:8px 10px; border-radius:10px; font-weight:600; color:var(--muted); font-size:13px; }
+
+  .clues{ font-size:14px; color:#0f172a; line-height:1.4 }
+  .hint{ margin-top:8px; font-weight:700; color:#0f172a; }
+
+  .controls{ display:flex; gap:8px; margin-top:8px }
+  button{
+    background:linear-gradient(180deg,var(--accent),#c37808);
+    border:0; color:#07122b; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:700;
+    box-shadow: 0 6px 12px rgba(255,209,102,0.08);
+  }
+  button.secondary{
+    background:transparent; color:#0f172a; border:1px solid rgba(255,255,255,0.06);
+  }
+
+  .log{ font-size:13px; color:var(--muted); max-height:180px; overflow:auto; padding:8px; border-radius:6px; background: rgba(255,255,255,0.01) }
+
+  .progress{ height:10px; background:rgba(255,255,255,0.03); border-radius:999px; overflow:hidden; }
+  .progress > i{ display:block; height:100%; background:linear-gradient(90deg,#936a09,#f7a166); width:0%; transition:width 420ms; }
+
+  .center-hint{ position:absolute; left:50%; top:10px; transform:translateX(-50%); background:rgba(0,0,0,0.35); padding:8px 12px; border-radius:999px; font-weight:700; color:#ffd; border:1px solid rgba(255,255,255,0.04); }
+.link-button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-top: 10px;
+      background: #0f172a;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-block;}
+  /* modal */
+  .modal{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(3,6,23,0.6); z-index:1000; visibility:hidden; opacity:0; transition:opacity 220ms;
+  }
+  .modal.show{ visibility:visible; opacity:1; }
+  .modal-card{ background:linear-gradient(180deg,#c14f08,#c14f08); color:#041026; padding:22px; border-radius:12px; width:320px; text-align:center; box-shadow:0 20px 60px rgba(2,6,23,0.6) }
+  .modal-card h2{ margin:0 0 8px 0; color:#0b2540 }
+  .modal-card p{ margin:0 0 16px 0; color:#16304a }
+  .sparkle{ font-size:38px; }
+
+  /* responsive */
+  @media (max-width:920px){
+    .card{ grid-template-columns: 1fr; }
+    .ui{ order:2 }
+  }
+</style>
+</head>
+<body>
+
+
+  <div class="card" role="application" aria-label="Treasure Hunt Game">
+  
+
+    <div class="play-area" id="playArea">
+  
+      <div class="center-hint" id="centerHint">Click anywhere on the map to search for treasure 🔍</div>
+      <div class="map" id="map"></div>
+    </div>
+
+    <aside class="ui">
+      <div class="panel">
+        <h1>Treasure Hunt — Find the hidden chests</h1>
+        <div class="meta">
+          <div class="chip" id="foundChip">Found: 0 / 5</div>
+          <div class="chip" id="attemptsChip">Attempts: 0</div>
+          <div class="chip" id="timerChip">Time: 00:00</div>
+        </div>
+
+        <div style="margin-top:10px">
+          <div class="progress"><i id="progressBar"></i></div>
+        </div>
+
+        <div class="controls" style="margin-top:12px">
+          <button id="resetBtn" class="secondary">Reset</button>
+          <button id="revealBtn" class="secondary">Reveal One</button>
+          <button id="startBtn">Start Game</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <strong>Clues</strong>
+        <div class="clues" id="clues">
+          <ol>
+            <li>By the old oak (top-left)</li>
+            <li>Hidden near the rocky stream (right)</li>
+            <li>Under a pile of golden leaves (bottom)</li>
+            <li>Next to a lone stone (center)</li>
+            <li>At the edge of the map (bottom-left)</li>
+          </ol>
+        </div>
+        <div class="hint" id="hintText">Hint: Click to get distance and warmer/colder feedback.</div>
+      </div>
+
+      <div class="panel">
+        <strong>Activity Log</strong>
+        <div class="log" id="log">Game not started. Press Start Game to place treasures.</div>
+       </div>
+      </aside>
+          <div style="
+  position: absolute;
+  bottom: 0px; /* distance from bottom of page */
+  left: 50%;
+  transform: translateX(-40%); ">
+      <a href="2Levels.html" class="link-button">All Levels</a>
+      <a href="level4.html" class="link-button">Next Level</a>
+    </div>
+      
+    </div>
+    
+   
+   <!-- Modal shown when win -->
+   <div class="modal" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+      <div class="modal-card">
+       <div class="sparkle">🏴‍☠️✨</div>
+       <h2 id="winTitle">Treasure Found!</h2>
+       <p id="winText">You found all the treasures — well done! 🎉</p>
+       <button id="playAgain">Play Again</button>
+     </div>
+   </div>
+    
+   
+
+   
+
+ <script>
+ (function(){
+  const TOTAL = 5;                // number of treasures
+  const map = document.getElementById('map');
+  const playArea = document.getElementById('playArea');
+  const foundChip = document.getElementById('foundChip');
+  const attemptsChip = document.getElementById('attemptsChip');
+  const timerChip = document.getElementById('timerChip');
+  const hintText = document.getElementById('hintText');
+  const logEl = document.getElementById('log');
+  const progressBar = document.getElementById('progressBar');
+
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const revealBtn = document.getElementById('revealBtn');
+
+  const winModal = document.getElementById('winModal');
+  const playAgainBtn = document.getElementById('playAgain');
+
+  let treasures = []; // {xPct, yPct, el, found, clue}
+  let foundCount = 0;
+  let attempts = 0;
+  let started = false;
+  let lastDistance = null;
+  let timerInterval = null;
+  let startTime = null;
+
+  function log(msg, append=true){
+      const ts = new Date().toLocaleTimeString();
+      if(append){
+        logEl.innerHTML = `<div style="margin-bottom:6px"><strong>[${ts}]</strong> ${msg}</div>` + logEl.innerHTML;
+      } else {
+        logEl.innerHTML = msg;
+      }
+    }
+
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+
+  function placeTreasures(){
+    treasures = [];
+    map.innerHTML = '';
+    // Use percentages so it works on responsive layout
+    for(let i=0;i<TOTAL;i++){
+      const x = rand(8,92); // percent
+      const y = rand(8,92);
+      const el = document.createElement('div');
+      el.className = 'treasure';
+      el.innerHTML = '💰';
+      el.style.left = x + '%';
+      el.style.top = y + '%';
+      map.appendChild(el);
+      treasures.push({xPct:x, yPct:y, el, found:false, clueIndex:i});
+    }
+    // Shuffle and assign some clue text (you can customize)
+    const clues = [
+      "By the old oak (top-left)",
+      "Near the rocky stream (right)",
+      "Under golden leaves (bottom)",
+      "Next to a lone stone (center)",
+      "At the edge of the map (bottom-left)"
+    ];
+    treasures.forEach((t,i)=> t.clue = clues[i % clues.length]);
+    foundCount = 0;
+    attempts = 0;
+    lastDistance = null;
+    updateUI();
+    log('Treasures placed. Click on the map to search.');
+  }
+
+  function updateUI(){
+      foundChip.textContent = `Found: ${foundCount} / ${TOTAL}`;
+      attemptsChip.textContent = `Attempts: ${attempts}`;
+      const pct = Math.round((foundCount / TOTAL) * 100);
+      progressBar.style.width = pct + '%';
+    }
+
+  function toPxPct(clientX, clientY){
+    // get coords relative to map box and convert to percent
+    const rect = map.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+    const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+    const xPct = x / rect.width * 100;
+    const yPct = y / rect.height * 100;
+    return {xPct, yPct, xPx:x, yPx:y};
+  }
+
+  function distance(a, b){
+    const dx = (a.xPct - b.xPct);
+    const dy = (a.yPct - b.yPct);
+    // Pythagoras in percentage space — relative distance
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  function clickSearch(e){
+    if(!started) { log('Start the game first.'); return; }
+    const coords = toPxPct(e.clientX, e.clientY);
+    attempts++;
+    attemptsChip.textContent = `Attempts: ${attempts}`;
+
+    // find closest not-yet-found treasure
+    let closest = null;
+    let minD = Infinity;
+    for(const t of treasures){
+      if(t.found) continue;
+      const d = distance(coords, t);
+      if(d < minD){ minD = d; closest = t; }
+    }
+
+    // compute feedback: threshold for "found"
+    // threshold small in percentage units
+    const FOUND_THRESHOLD = 3.5; // ~3.5% of map diagonal ~ good
+    let feedback = '';
+    if(minD <= FOUND_THRESHOLD){
+      // found the treasure
+      closest.found = true;
+      foundCount++;
+      // reveal element visually and animate
+      closest.el.classList.add('found');
+      closest.el.style.transition = 'transform 420ms cubic-bezier(.2,.9,.2,1), opacity 420ms';
+      closest.el.style.transform = 'translate(-50%,-50%) scale(1.06)';
+      // small pop then settle
+      setTimeout(()=> closest.el.style.transform = 'translate(-50%,-50%) scale(1)', 420);
+      feedback = `You found a treasure! (${closest.clue})`;
+      log(`Treasure found at approx (${Math.round(closest.xPct)}%, ${Math.round(closest.yPct)}%): ${closest.clue}`);
+    } else {
+      // warmer/colder hint relative to lastDistance
+      const distPixels = Math.round(minD * 100); // scaled number for display
+      if(lastDistance === null) feedback = `Distance to nearest treasure: ~${distPixels} (units).`;
+      else {
+        if(minD < lastDistance) feedback = `Warmer — you're getting closer. (~${distPixels})`;
+        else if(minD > lastDistance) feedback = `Colder — moving away. (~${distPixels})`;
+        else feedback = `Same distance as before. (~${distPixels})`;
+      }
+      log(`Searched at ${Math.round(coords.xPct)}%,${Math.round(coords.yPct)}% — ${feedback}`);
+    }
+
+    lastDistance = minD;
+    hintText.textContent = feedback;
+    updateUI();
+
+    if(foundCount >= TOTAL){
+      // win!
+      showWin();
+    }
+  }
+
+  function showWin(){
+    started = false;
+    clearInterval(timerInterval);
+    const elapsed = Math.floor((Date.now() - startTime)/1000);
+    const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+    const ss = String(elapsed%60).padStart(2,'0');
+    document.getElementById('winText').textContent = `You found all treasures in ${attempts} attempts and ${mm}:${ss} — Great job!`;
+    winModal.classList.add('show');
+    log(`Game finished in ${attempts} attempts, time ${mm}:${ss}`);
+  }
+
+  function revealOne(){
+    // reveal one random not-yet-found treasure as 'found'
+    const unrevealed = treasures.filter(t => !t.found);
+    if(unrevealed.length === 0){ log('No treasures to reveal.'); return; }
+    const pick = unrevealed[Math.floor(Math.random()*unrevealed.length)];
+    pick.found = true;
+    pick.el.classList.add('found');
+    foundCount++;
+    updateUI();
+    log(`Revealed one treasure as a hint: ${pick.clue}`);
+    if(foundCount >= TOTAL) showWin();
+  }
+
+  function resetGame(){
+    clearInterval(timerInterval);
+    startTime = null;
+    timerChip.textContent = 'Time: 00:00';
+    winModal.classList.remove('show');
+    started = false;
+    map.innerHTML = '';
+    log('Game reset. Press Start Game to begin.', false);
+    foundChip.textContent = `Found: 0 / ${TOTAL}`;
+    attemptsChip.textContent = 'Attempts: 0';
+    progressBar.style.width = '0%';
+  }
+
+  function startGame(){
+    resetGame();
+    placeTreasures();
+    started = true;
+    startTime = Date.now();
+    timerChip.textContent = 'Time: 00:00';
+    timerInterval = setInterval(()=>{
+      const sec = Math.floor((Date.now() - startTime)/1000);
+      const mm = String(Math.floor(sec/60)).padStart(2,'0');
+      const ss = String(sec%60).padStart(2,'0');
+      timerChip.textContent = `Time: ${mm}:${ss}`;
+    }, 500);
+  }
+
+  // Event listeners
+  map.addEventListener('click', clickSearch);
+  playArea.addEventListener('click', function(e){
+    // if clicked outside map, ignore
+  });
+
+  startBtn.addEventListener('click', startGame);
+  resetBtn.addEventListener('click', resetGame);
+  revealBtn.addEventListener('click', revealOne);
+  playAgainBtn.addEventListener('click', ()=>{ winModal.classList.remove('show'); startGame(); });
+
+  // keyboard hint: R to reveal, S to start/reset
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'r' || e.key === 'R') revealOne();
+    if(e.key === 's' || e.key === 'S') startGame();
+  });
+
+  // initial log
+  log('Welcome! Press Start Game to begin the hunt.', false);
+
+  // Accessibility: announce when modal opens
+  const observer = new MutationObserver((mut)=>{
+    if(winModal.classList.contains('show')) winModal.focus();
+  });
+  observer.observe(winModal, {attributes:true, attributeFilter:['class']});
+})();
+</script>
+</body>
+</html>

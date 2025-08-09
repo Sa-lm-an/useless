@@ -1,0 +1,182 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Trivia Trail Treasure Hunt</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #96e6a1;
+      padding: 20px;
+    }
+    h1 {
+      color: #8b5e3c;
+    }
+    .question-box {
+      background: #fff7d6;
+      border: 2px solid #d2b48c;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 15px auto;
+      max-width: 500px;
+    }
+    button {
+      display: block;
+      margin: 8px auto;
+      padding: 12px 16px;
+      cursor: pointer;
+      background: #d2b48c;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      width: 80%;
+    }
+    .link-button {
+      padding: 12px 16px;
+      font-size: 20px;
+      margin-top: 10px;
+      background: #d2b48c;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
+      display: inline-block;}
+    #progress {
+      margin-top: 20px;
+      height: 40px;
+      background: #ddd;
+      border-radius: 15px;
+      overflow: hidden;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, gold, orange);
+      transition: width 0.3s;
+    }
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    #treasure {
+      display: none;
+      margin-top: 20px;
+    }
+    #treasure img {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📜 Trivia Trail 🪙</h1>
+  <p>Answer questions to move toward the treasure! Wrong answers set you back.</p>
+
+  <div id="game"></div>
+  <div id="progress">
+    <div id="progress-bar"></div>
+  </div>
+  <div id="message"></div>
+
+  <div id="treasure">
+    <img id="chest" src="treasure2.jpg" alt="Closed Treasure Chest">
+    <p>Click the chest to open it!</p>
+  </div>
+  </div>
+    <div style="justify-content: center; align-items: center;
+                position: absolute;
+  bottom: 50px; left: 50%;
+  transform: translateX(-40%);">
+     <a href="2Levels.html" class="link-button">All Levels</a>
+     </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Which ocean is the largest?",
+        options: ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean"],
+        answer: "Pacific Ocean"
+      },
+      {
+        question: "What is the capital of Australia?",
+        options: ["Sydney", "Melbourne", "Canberra"],
+        answer: "Canberra"
+      },
+      {
+        question: "How many continents are there?",
+        options: ["5", "6", "7"],
+        answer: "7"
+      },
+      {
+        question: "Which planet is known as the Red Planet?",
+        options: ["Mars", "Venus", "Jupiter"],
+        answer: "Mars"
+      },
+      {
+        question: "What is the currency of Japan?",
+        options: ["Yuan", "Yen", "Won"],
+        answer: "Yen"
+      }
+    ];
+
+    let currentQuestion = 0;
+    let progress = 0;
+
+    const gameDiv = document.getElementById("game");
+    const progressBar = document.getElementById("progress-bar");
+    const message = document.getElementById("message");
+    const treasure = document.getElementById("treasure");
+    const chestImg = document.getElementById("chest");
+
+    function showQuestion() {
+      if (progress >= 100) {
+        gameDiv.innerHTML = "";
+        message.textContent = "🎉 You reached the treasure!";
+        treasure.style.display = "block";
+        return;
+      }
+
+      if (currentQuestion >= questions.length) {
+        currentQuestion = 0;
+      }
+
+      const q = questions[currentQuestion];
+      gameDiv.innerHTML = `
+        <div class="question-box">
+          <p>${q.question}</p>
+          ${q.options.map(opt => `<button onclick="checkAnswer('${opt}')">${opt}</button>`).join("")}
+        </div>
+      `;
+    }
+
+    function checkAnswer(selected) {
+      if (selected === questions[currentQuestion].answer) {
+        progress += 20;
+        if (progress > 100) progress = 100;
+      } else {
+        progress -= 10;
+        if (progress < 0) progress = 0;
+      }
+      progressBar.style.width = progress + "%";
+      currentQuestion++;
+      showQuestion();
+    }
+
+    chestImg.addEventListener("click", () => {
+      chestImg.src = "treasure1.jpg"; // Open chest image
+      message.textContent = "💰 You found the treasure! Gold for you!";
+    });
+
+    showQuestion();
+  </script>
+
+</body>
+</html>

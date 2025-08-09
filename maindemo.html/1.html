@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Treasure Hunt Signup</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #ffecd2, #fcb69f);
+      text-align: center;
+      padding: 50px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-width: 400px;
+      margin: auto;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #ff6f61;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e55a4f;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Sign Up to Play</h1>
+  <form id="signupForm">
+    <input type="text" id="name" placeholder="Enter your name" required>
+    <input type="text" id="phone" placeholder="Enter your phone number" required>
+    <button type="submit">Start Game</button>
+  </form>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa_wF-wp2v42mLNic1_R1a7w0skWV94b8",
+    authDomain: "useless-ecf5e.firebaseapp.com",
+    projectId: "useless-ecf5e",
+    storageBucket: "useless-ecf5e.firebasestorage.app",
+    messagingSenderId: "399978256767",
+    appId: "1:399978256767:web:2bb6f882fc03074bd5224a",
+    measurementId: "G-2RHWZRZKHR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  document.getElementById("signupForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    if (!name || !phone) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    // Save phone in localStorage
+    localStorage.setItem("playerPhone", phone);
+
+    // Check if player exists
+    const q = query(collection(db, "players"), where("phone", "==", phone));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      // New player
+      await addDoc(collection(db, "players"), {
+        name: name,
+        phone: phone,
+        currentLevel: 1
+      });
+    } else {
+      // Existing player - make sure currentLevel exists
+      snapshot.forEach(async (docSnap) => {
+        if (!docSnap.data().currentLevel) {
+          await updateDoc(doc(db, "players", docSnap.id), { currentLevel: 1 });
+        }
+      });
+    }
+
+    // Redirect to level selection
+    window.location.href = "page2.html";
+  });
+</script>
+
+</body>
+</html>
